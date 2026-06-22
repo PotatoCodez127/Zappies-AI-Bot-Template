@@ -7,3 +7,4 @@ service_account.json
 .DS_Store
 .vscode/
 .idea/
+.ruff_cache/

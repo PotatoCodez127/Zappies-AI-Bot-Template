@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+
+# Environments
+.env
+.venv
+venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Testing and Tools
+.pytest_cache/
+.ruff_cache/
+.idea/
+.vscode/
+
+# Local data (Optional, but good practice so you don't bake local tests into production)
+data/
