@@ -1,4 +1,4 @@
-# Zappies-AI Bot Template
+# fastapi-neo4j-ai-template
 
 This repository contains a production-ready, reusable template for building powerful, data-driven AI agents. It's designed for rapid development and deployment of customized bots for any client, using a Retrieval-Augmented Generation (RAG) architecture with a Knowledge Graph and Vector Store.
 
@@ -57,7 +57,7 @@ The API will now be securely running in an isolated container at http://localhos
 The project is organized into modules with a clear separation of concerns, making it easy to maintain and scale.
 
 ```
-/zappies-ai-bot-template/
+/fastapi-neo4j-ai-template/
 |
 ├── 📂 agent/               # Core AI agent logic and persona
 |   ├── 📄 agent_factory.py # Builds the agent executor
@@ -100,7 +100,7 @@ Follow these steps to get your first bot running.
 
 ```bash
 git clone <your-repository-url>
-cd zappies-ai-bot-template
+cd fastapi-neo4j-ai-template
 ```
 
 ### 3. Set Up a Virtual Environment
