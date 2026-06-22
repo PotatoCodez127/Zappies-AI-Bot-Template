@@ -22,6 +22,36 @@ This repository contains a production-ready, reusable template for building powe
     -   **Supabase** (PostgreSQL with pgvector for Vector Storage)
 -   **Deployment**: Uvicorn, Procfile for Heroku/Render
 
+## 🧹 Code Quality & Standards
+
+This project enforces strict, modern Python development standards to ensure a clean and maintainable codebase:
+- **Linting & Formatting:** Managed centrally via `pyproject.toml`.
+- **Formatter:** [Black](https://github.com/psf/black) is used for uncompromising PEP 8 code formatting.
+- **Linter:** [Ruff](https://astral.sh/ruff) is used for lightning-fast linting and automated import sorting.
+
+To run the quality checks locally:
+```bash
+python -m black .
+python -m ruff check . --fix
+```
+
+### 🐳 Alternative: Running with Docker (Recommended)
+
+To ensure complete environment reproducibility, this template includes a production-ready `Dockerfile`. You can spin up the entire API without managing local Python environments.
+
+1. Ensure [Docker](https://www.docker.com/) is installed and running.
+2. Build the image:
+```bash
+docker build -t zappies-bot .
+```
+3. Run the container:
+```bash
+   docker run -d -p 8000:8000 --env-file .env zappies-bot
+```
+The API will now be securely running in an isolated container at http://localhost:8000.
+
+---
+
 ## 📂 Project Structure
 
 The project is organized into modules with a clear separation of concerns, making it easy to maintain and scale.
