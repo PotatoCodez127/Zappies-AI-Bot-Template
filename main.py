@@ -1,7 +1,8 @@
 # /main.py
 
-import uvicorn
 import os
+
+import uvicorn
 
 if __name__ == "__main__":
     # Get the port from the environment variable, default to 8000

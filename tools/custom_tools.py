@@ -1,36 +1,38 @@
 # tools/custom_tools.py
-from config.settings import settings
-from supabase.client import Client, create_client
-import logging
 import json
+import logging
+
 from langchain.tools import StructuredTool
 from langchain_core.tools import Tool
 from pydantic import ValidationError
+from supabase.client import Client, create_client
+
+from config.settings import settings
+
 from .action_schemas import (
     BookOnboardingCallArgs,
-    CheckAvailabilityArgs,
     CancelAppointmentArgs,
+    CheckAvailabilityArgs,
     RescheduleAppointmentArgs,
-    RequestHumanHandoverArgs
-)
-from .google_calendar import (
-    get_available_slots,
-    create_calendar_event,
-    find_event_by_details,
-    update_calendar_event,
-    delete_calendar_event
 )
 from .email_sender import send_confirmation_email
+from .google_calendar import (
+    delete_calendar_event,
+    find_event_by_details,
+    get_available_slots,
+    update_calendar_event,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def check_availability(date: str) -> str:
     # This function remains the same
     logger.info(f"--- ACTION: Checking availability for {date} ---")
     try:
         data = json.loads(date)
-        date_to_check = data.get('date', date)
+        date_to_check = data.get("date", date)
     except (json.JSONDecodeError, TypeError):
         date_to_check = date
     available_slots = get_available_slots(date_to_check)
@@ -39,8 +41,9 @@ def check_availability(date: str) -> str:
         return f"I'm sorry, but there are no available slots on {date_to_check}. Please try another date."
     return f"Here are the available slots for {date_to_check}: {', '.join(available_slots)}"
 
+
 def book_zappies_onboarding_call_from_json(json_string: str) -> str:
-    logger.info(f"--- ACTION: Booking Zappies AI Onboarding Call ---")
+    logger.info("--- ACTION: Booking Zappies AI Onboarding Call ---")
     try:
         data = json.loads(json_string)
         validated_args = BookOnboardingCallArgs(**data)
@@ -68,52 +71,63 @@ def book_zappies_onboarding_call_from_json(json_string: str) -> str:
         f"Stated Goal: {goal}\n"
         f"Stated Budget: R{monthly_budget}/month"
     )
-    
+
     try:
-        
+
         supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
-        
+
         # Insert the meeting details into Supabase without a calendar event ID
-        response = supabase.table("meetings").insert({
-            # "google_calendar_event_id" is now omitted
-            "full_name": full_name,
-            "email": email,
-            "company_name": company_name,
-            "start_time": start_time,
-            "goal": goal,
-            "monthly_budget": monthly_budget,
-            "status": "pending_confirmation"
-        }).execute()
-        
-        meeting_id = response.data[0]['id']
-
-        try:
-            supabase.table("conversation_history").update(
-                {"meeting_booked": True}
-            ).eq("conversation_id", conversation_id).execute()
-            logger.info(f"Successfully marked conversation {conversation_id} as 'meeting_booked = true'.")
-        except Exception as e:
-            # Log this error, but don't stop the user-facing process
-            logger.error(f"Error updating conversation_history for {conversation_id}: {e}", exc_info=True)
-
-        send_confirmation_email(
-            recipient_email=email,
-            full_name=full_name,
-            start_time=start_time,
-            meeting_id=meeting_id
+        response = (
+            supabase.table("meetings")
+            .insert(
+                {
+                    # "google_calendar_event_id" is now omitted
+                    "full_name": full_name,
+                    "email": email,
+                    "company_name": company_name,
+                    "start_time": start_time,
+                    "goal": goal,
+                    "monthly_budget": monthly_budget,
+                    "status": "pending_confirmation",
+                }
+            )
+            .execute()
         )
 
-        return (f"Excellent, {full_name}! I've provisionally booked your onboarding call. "
-                "I've just sent you an email to confirm your spot. Please click the link in the email to finalize everything. ✨")
+        meeting_id = response.data[0]["id"]
+
+        try:
+            supabase.table("conversation_history").update({"meeting_booked": True}).eq(
+                "conversation_id", conversation_id
+            ).execute()
+            logger.info(
+                f"Successfully marked conversation {conversation_id} as 'meeting_booked = true'."
+            )
+        except Exception as e:
+            # Log this error, but don't stop the user-facing process
+            logger.error(
+                f"Error updating conversation_history for {conversation_id}: {e}", exc_info=True
+            )
+
+        send_confirmation_email(
+            recipient_email=email, full_name=full_name, start_time=start_time, meeting_id=meeting_id
+        )
+
+        return (
+            f"Excellent, {full_name}! I've provisionally booked your onboarding call. "
+            "I've just sent you an email to confirm your spot. Please click the link in the email to finalize everything. ✨"
+        )
     except (ValueError, Exception) as e:
         logger.error(f"Booking/validation error: {e}", exc_info=True)
         return f"I'm sorry, I cannot book that appointment. {e}"
 
+
 # tools/custom_tools.py
+
 
 def request_human_handover(json_string: str) -> str:
     """Handles the human handover process."""
-    logger.info(f"--- ACTION: Requesting Human Handover ---")
+    logger.info("--- ACTION: Requesting Human Handover ---")
     try:
         data = json.loads(json_string)
         conversation_id = data["conversation_id"]
@@ -125,33 +139,41 @@ def request_human_handover(json_string: str) -> str:
 
         # --- THIS IS THE FIX ---
         # 1. Fetch the conversation history without using .single()
-        response = supabase.table("conversation_history").select("history").eq("conversation_id", conversation_id).execute()
-        
+        response = (
+            supabase.table("conversation_history")
+            .select("history")
+            .eq("conversation_id", conversation_id)
+            .execute()
+        )
+
         history_messages = []
-        if response.data and response.data[0].get('history'):
+        if response.data and response.data[0].get("history"):
             from langchain_core.messages import messages_from_dict
-            history_messages = messages_from_dict(response.data[0]['history'])
+
+            history_messages = messages_from_dict(response.data[0]["history"])
         else:
-            logger.warning(f"No previous history found for conversation {conversation_id}. Handover will proceed with an empty history.")
+            logger.warning(
+                f"No previous history found for conversation {conversation_id}. Handover will proceed with an empty history."
+            )
 
         # 2. Send the notification email
         send_handover_email(conversation_id, history_messages)
 
         # 3. Update the conversation status. Use upsert to create the record if it doesn't exist.
-        supabase.table("conversation_history").upsert({
-            "conversation_id": conversation_id,
-            "status": "handover"
-        }).execute()
-        
+        supabase.table("conversation_history").upsert(
+            {"conversation_id": conversation_id, "status": "handover"}
+        ).execute()
+
         return "Okay, I've notified a member of our team. They will review our conversation and get back to you here as soon as possible."
 
     except Exception as e:
         logger.error(f"Error during handover for convo {conversation_id}: {e}", exc_info=True)
         return "Sorry, I encountered an error while trying to reach a human. Please try again."
 
+
 def cancel_appointment_from_json(json_string: str) -> str:
     """Cancels an appointment from a JSON string."""
-    logger.info(f"--- ACTION: Canceling appointment from JSON ---")
+    logger.info("--- ACTION: Canceling appointment from JSON ---")
     try:
         data = json.loads(json_string)
         validated_args = CancelAppointmentArgs(**data)
@@ -160,7 +182,7 @@ def cancel_appointment_from_json(json_string: str) -> str:
 
     email = validated_args.email
     original_start_time = validated_args.original_start_time
-    
+
     event_id = find_event_by_details(email, original_start_time)
     if not event_id:
         return f"I couldn't find an appointment for {email} at that time. Please check the details."
@@ -171,9 +193,10 @@ def cancel_appointment_from_json(json_string: str) -> str:
         logger.error(f"Error canceling event: {e}", exc_info=True)
         return f"Sorry, there was an error canceling your appointment: {str(e)}"
 
+
 def reschedule_appointment_from_json(json_string: str) -> str:
     """Reschedules an appointment from a JSON string."""
-    logger.info(f"--- ACTION: Rescheduling appointment from JSON ---")
+    logger.info("--- ACTION: Rescheduling appointment from JSON ---")
     try:
         data = json.loads(json_string)
         validated_args = RescheduleAppointmentArgs(**data)
@@ -194,6 +217,7 @@ def reschedule_appointment_from_json(json_string: str) -> str:
         logger.error(f"Error rescheduling event: {e}", exc_info=True)
         return f"Sorry, there was an error rescheduling your appointment: {str(e)}"
 
+
 def get_custom_tools() -> list:
     """Returns a list of all custom tools available to the agent."""
     tools = [
@@ -201,7 +225,7 @@ def get_custom_tools() -> list:
             name="check_availability",
             func=check_availability,
             args_schema=CheckAvailabilityArgs,
-            description="Use to check for available 1-hour time slots on a specific date (YYYY-MM-DD)."
+            description="Use to check for available 1-hour time slots on a specific date (YYYY-MM-DD).",
         ),
         Tool(
             name="book_zappies_onboarding_call",
@@ -209,7 +233,7 @@ def get_custom_tools() -> list:
             description=(
                 "Use to book a NEW onboarding call after you have collected all required information. The input must be a single, "
                 "valid JSON string with keys: 'full_name', 'email', 'company_name', 'start_time', 'goal', and 'monthly_budget'."
-            )
+            ),
         ),
         Tool(
             name="cancel_appointment",
@@ -217,7 +241,7 @@ def get_custom_tools() -> list:
             description=(
                 "Use to cancel an existing appointment. The input must be a single, valid JSON string with keys: "
                 "'email' and 'original_start_time'."
-            )
+            ),
         ),
         Tool(
             name="reschedule_appointment",
@@ -225,7 +249,7 @@ def get_custom_tools() -> list:
             description=(
                 "Use to reschedule an existing appointment. The input must be a single, valid JSON string with keys: "
                 "'email', 'original_start_time', and 'new_start_time'."
-            )
+            ),
         ),
         Tool(
             name="request_human_handover",
@@ -233,8 +257,7 @@ def get_custom_tools() -> list:
             description=(
                 "Use this tool when the user explicitly asks to speak to a human, a person, or a team member. "
                 "The input MUST be a single, valid JSON string with the key: 'conversation_id'."
-            )
-        )
+            ),
+        ),
     ]
     return tools
-

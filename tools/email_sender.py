@@ -1,29 +1,31 @@
 # tools/email_sender.py
-import smtplib
 import logging
+import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
 from config.settings import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def send_confirmation_email(recipient_email: str, full_name: str, start_time: str, meeting_id: str):
     """Sends a meeting confirmation email using SMTP."""
     sender_email = settings.SENDER_EMAIL
     sender_password = settings.SENDER_APP_PASSWORD
-    
+
     if not sender_email or not sender_password:
         logger.error("Sender email or password not configured. Cannot send email.")
         return False
 
     confirmation_url = f"{settings.API_BASE_URL}/confirm-meeting/{meeting_id}"
-    
+
     # Create the email
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = "Please Confirm Your Onboarding Call with Zappies AI"
-    msg['From'] = sender_email
-    msg['To'] = recipient_email
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "Please Confirm Your Onboarding Call with Zappies AI"
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
     html_body = f"""
     <html>
     <body>
@@ -36,7 +38,8 @@ def send_confirmation_email(recipient_email: str, full_name: str, start_time: st
     </body>
     </html>
     """
-    html_body = """
+    html_body = (
+        """
 <!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
 
@@ -188,7 +191,9 @@ def send_confirmation_email(recipient_email: str, full_name: str, start_time: st
 													<table class="heading_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad" style="padding-left:15px;padding-right:15px;padding-top:15px;text-align:center;width:100%;">
-																<h5 style="margin: 0; color: #5b0202; direction: ltr; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 700; letter-spacing: normal; line-height: 1.2; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 24px;"><span class="tinyMce-placeholder" style="word-break: break-word;">"""+full_name+"""</span></h5>
+																<h5 style="margin: 0; color: #5b0202; direction: ltr; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 700; letter-spacing: normal; line-height: 1.2; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 24px;"><span class="tinyMce-placeholder" style="word-break: break-word;">"""
+        + full_name
+        + """</span></h5>
 															</td>
 														</tr>
 													</table>
@@ -221,7 +226,9 @@ def send_confirmation_email(recipient_email: str, full_name: str, start_time: st
 														<tr>
 															<td class="pad">
 																<div style="color:#5b0202;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:18px;font-weight:400;letter-spacing:0px;line-height:1.2;text-align:center;mso-line-height-alt:22px;">
-																	<p style="margin: 0;"><strong>"""+start_time+"""</strong></p>
+																	<p style="margin: 0;"><strong>"""
+        + start_time
+        + """</strong></p>
 																</div>
 															</td>
 														</tr>
@@ -238,8 +245,12 @@ def send_confirmation_email(recipient_email: str, full_name: str, start_time: st
 													<table class="button_block block-4" width="100%" border="0" cellpadding="40" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad">
-																<div class="alignment" align="center"><a href=" """+confirmation_url+""" " target="_blank" style="color:#fff1dd;text-decoration:none;"><!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"  href=" """+confirmation_url+""" "  style="height:50px;width:232px;v-text-anchor:middle;" arcsize="8%" fillcolor="#5b0202">
+																<div class="alignment" align="center"><a href=" """
+        + confirmation_url
+        + """ " target="_blank" style="color:#fff1dd;text-decoration:none;"><!--[if mso]>
+<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"  href=" """
+        + confirmation_url
+        + """ "  style="height:50px;width:232px;v-text-anchor:middle;" arcsize="8%" fillcolor="#5b0202">
 <v:stroke dashstyle="Solid" weight="0px" color="#5b0202"/>
 <w:anchorlock/>
 <v:textbox inset="0px,0px,0px,0px">
@@ -316,12 +327,13 @@ def send_confirmation_email(recipient_email: str, full_name: str, start_time: st
 
 </html>
     """
-    
-    msg.attach(MIMEText(html_body, 'html'))
-    
+    )
+
+    msg.attach(MIMEText(html_body, "html"))
+
     try:
         # Connect to Gmail's SMTP server and send the email
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
             server.send_message(msg)
         logger.info(f"Confirmation email sent successfully to {recipient_email}")
@@ -329,7 +341,8 @@ def send_confirmation_email(recipient_email: str, full_name: str, start_time: st
     except Exception as e:
         logger.error(f"Failed to send confirmation email: {e}", exc_info=True)
         return False
-    
+
+
 def send_handover_email(conversation_id: str, history: list):
     """Sends a human handover notification with the chat history."""
     sender_email = settings.SENDER_EMAIL
@@ -343,16 +356,17 @@ def send_handover_email(conversation_id: str, history: list):
     # Format the chat history into a readable HTML string
     history_html = ""
     for message in history:
-        speaker = "User" if message.type == 'human' else "AI"
+        speaker = "User" if message.type == "human" else "AI"
         # Sanitize message content for HTML
         import html
+
         content = html.escape(message.content)
         history_html += f'<p style="margin: 5px 0;"><strong>{speaker}:</strong> {content}</p>'
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = f"Human Handover Requested: Conversation ID {conversation_id}"
-    msg['From'] = sender_email
-    msg['To'] = recipient_email
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"Human Handover Requested: Conversation ID {conversation_id}"
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
 
     html_body = f"""
     <html>
@@ -368,11 +382,11 @@ def send_handover_email(conversation_id: str, history: list):
     </body>
     </html>
     """
-    
-    msg.attach(MIMEText(html_body, 'html'))
-    
+
+    msg.attach(MIMEText(html_body, "html"))
+
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
             server.send_message(msg)
         logger.info(f"Handover notification sent successfully for conversation {conversation_id}")

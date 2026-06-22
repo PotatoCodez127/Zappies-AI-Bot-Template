@@ -1,14 +1,17 @@
 # config/settings.py
 import os
+
 from dotenv import load_dotenv
 
 # Load environment variables from a .env file at the project root
 load_dotenv()
 
+
 class Settings:
     """
     Centralized application settings, loaded from environment variables.
     """
+
     # --- Email Configuration ---
     HANDOVER_EMAIL: str = os.getenv("HANDOVER_EMAIL")
     SENDER_EMAIL: str = os.getenv("SENDER_EMAIL")
@@ -53,13 +56,28 @@ class Settings:
 
     # --- Graph Generation (Optional Customization) ---
     GRAPH_ALLOWED_NODES: list[str] = [
-        "Policy", "Rule", "Membership", "Party", "Guest", "Item",
-        "Payment", "Action", "Condition", "Location"
+        "Policy",
+        "Rule",
+        "Membership",
+        "Party",
+        "Guest",
+        "Item",
+        "Payment",
+        "Action",
+        "Condition",
+        "Location",
     ]
     GRAPH_ALLOWED_RELATIONSHIPS: list[str] = [
-        "APPLIES_TO", "CONCERNS", "PROHIBITS", "REQUIRES", "INCLUDES",
-        "HAS_CONDITION", "MUST_PERFORM", "HAS_FEE"
+        "APPLIES_TO",
+        "CONCERNS",
+        "PROHIBITS",
+        "REQUIRES",
+        "INCLUDES",
+        "HAS_CONDITION",
+        "MUST_PERFORM",
+        "HAS_FEE",
     ]
+
 
 # Instantiate settings for easy import across the application
 settings = Settings()
