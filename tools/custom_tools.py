@@ -15,7 +15,7 @@ from .action_schemas import (
     CheckAvailabilityArgs,
     RescheduleAppointmentArgs,
 )
-from .email_sender import send_confirmation_email
+from .email_sender import send_confirmation_email, send_handover_email
 from .google_calendar import (
     delete_calendar_event,
     find_event_by_details,
@@ -64,13 +64,7 @@ def book_zappies_onboarding_call_from_json(json_string: str) -> str:
     start_time = validated_args.start_time
     goal = validated_args.goal
     monthly_budget = validated_args.monthly_budget
-
-    summary = f"Onboard Call with {company_name} | Zappies AI"
-    description = (
-        f"Onboarding call with {full_name} from {company_name} to discuss the 'Project Pipeline AI'.\n\n"
-        f"Stated Goal: {goal}\n"
-        f"Stated Budget: R{monthly_budget}/month"
-    )
+    conversation_id = validated_args.conversation_id
 
     try:
 
